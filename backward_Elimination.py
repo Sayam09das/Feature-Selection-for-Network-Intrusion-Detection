@@ -47,7 +47,7 @@ X = scaler.fit_transform(X)
 
 X = pd.DataFrame(X, columns=chi_features)
 
-# 🔥 ALIGN INDICES
+# ALIGN INDICES
 X = X.reset_index(drop=True)
 Y = Y.reset_index(drop=True)
 

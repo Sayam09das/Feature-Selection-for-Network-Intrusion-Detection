@@ -30,7 +30,7 @@ X_scaled = scaler.fit_transform(X_scaled)
 X_scaled = pd.DataFrame(X_scaled, columns=X_original.columns)
 
 # =============================
-# 🔥 CHI-SQUARE
+# CHI-SQUARE
 # =============================
 k = 20
 
@@ -55,7 +55,7 @@ print("\nSelected Chi-Square Features:\n")
 print(chi_features)
 
 # =============================
-# 🔥 DISPERSION RATIO
+# DISPERSION RATIO
 # =============================
 mean = X_original.mean()
 variance = X_original.var()
