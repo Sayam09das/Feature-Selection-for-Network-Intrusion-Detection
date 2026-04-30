@@ -6,7 +6,7 @@ from sklearn.preprocessing import MinMaxScaler
 # -----------------------------
 # Load datasets
 # -----------------------------
-df_scaled = pd.read_csv("Cleaned_Dataset/NF-UNSW-NB15-v3-CLEANED.csv")       # for Chi-square
+df_scaled = pd.read_csv("cleaned/UNSW/NF-UNSW-NB15-v3-CLEANED.csv")       # for Chi-square
 df_original = pd.read_csv("Cleaned_Dataset/NF-UNSW-NB15-v3-NO-SCALE.csv")    # for Dispersion
 
 print("Datasets loaded!")
