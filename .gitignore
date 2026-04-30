@@ -43,9 +43,9 @@ env/
 *.ipynb
 
 # Data files (large CSV datasets)
-*.csv
+.csv
 data/
-Cleaned_Dataset/
+cleaned/
 
 # Output files
 *.log

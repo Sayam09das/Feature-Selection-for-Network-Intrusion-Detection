@@ -1,75 +1,133 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-
-df = pd.read_csv("data/NF-UNSW-NB15-v3.csv", low_memory=False)
+import os
 
 # -----------------------------
+# SETTINGS
+# -----------------------------
+DATASET_NAME = "TON"
+
+# Resolve paths (works from scripts folder)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+INPUT_PATH = os.path.join(PROJECT_ROOT, "data", "NF-ToN-IoT-v3.csv")
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "cleaned", DATASET_NAME)
+
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+# -----------------------------
+# LOAD DATA
+# -----------------------------
+df = pd.read_csv(INPUT_PATH, low_memory=False)
+
+print("Dataset loaded!")
+print("Initial Shape:", df.shape)
+
+# -----------------------------
+# AUTO-DETECT TARGET COLUMN
+# -----------------------------
+if "Label" in df.columns:
+    target_col = "Label"
+elif "Attack" in df.columns:
+    target_col = "Attack"
+else:
+    raise Exception("❌ No target column found!")
+
+print("Target column:", target_col)
+
 # Separate target
-# -----------------------------
-target = df["Label"]
-df = df.drop(["Label"], axis=1)
+target = df[target_col].copy()
+df = df.drop(columns=[target_col])
 
 # -----------------------------
-# Handle missing values
+# HANDLE MISSING VALUES
 # -----------------------------
 num_cols = df.select_dtypes(include=np.number).columns
-df[num_cols] = df[num_cols].fillna(df[num_cols].mean())
-
 cat_cols = df.select_dtypes(include='object').columns
 
+# numeric
+df[num_cols] = df[num_cols].replace([np.inf, -np.inf], np.nan)
+df[num_cols] = df[num_cols].fillna(df[num_cols].mean())
+
+# categorical
 for col in cat_cols:
     df[col] = df[col].fillna(df[col].mode()[0])
 
 # -----------------------------
-# Remove duplicates
+# REMOVE DUPLICATES
 # -----------------------------
 df = df.drop_duplicates()
 
+# CRITICAL FIX: target was saved BEFORE duplicate removal
+# Reset target to match the cleaned df's index
+target = target.loc[df.index].reset_index(drop=True)
+
 # -----------------------------
-# Drop constant columns
+# DROP CONSTANT COLUMNS
 # -----------------------------
 df = df.loc[:, df.nunique() > 1]
 
+print("Shape after cleaning:", df.shape)
+
 # -----------------------------
-# Encode categorical
+# ENCODE CATEGORICAL
 # -----------------------------
 le = LabelEncoder()
 for col in cat_cols:
-    df[col] = le.fit_transform(df[col])
+    if col in df.columns:
+        df[col] = le.fit_transform(df[col])
 
 # -----------------------------
-# Save NON-SCALED dataset (for Dispersion)
+# SAVE NON-SCALED DATASET
 # -----------------------------
-df["Label"] = target
-df.to_csv("NF-UNSW-NB15-v3-NO-SCALE.csv", index=False)
+df_no_scale = df.copy()
+df_no_scale[target_col] = target.values
+
+no_scale_path = os.path.join(OUTPUT_DIR, "no_scale.csv")
+df_no_scale.to_csv(no_scale_path, index=False)
+
+print("✅ Saved:", no_scale_path)
 
 # -----------------------------
-# Remove Label again for scaling
+# SCALING (SAFE VERSION)
 # -----------------------------
-df = df.drop(["Label"], axis=1)
 
-# -----------------------------
-# Handle inf values before scaling
-# -----------------------------
-# Replace infinity values with NaN, then fill with mean
+# Recalculate numeric columns AFTER all processing
+num_cols = df.select_dtypes(include=np.number).columns
+
+# Final cleaning before scaling
 df[num_cols] = df[num_cols].replace([np.inf, -np.inf], np.nan)
 df[num_cols] = df[num_cols].fillna(df[num_cols].mean())
 
-# -----------------------------
-# Scaling (ONLY features)
-# -----------------------------
+# Drop any remaining bad columns (rare case)
+valid_cols = df[num_cols].columns[df[num_cols].isnull().sum() == 0]
+
+print("Scaling columns:", len(valid_cols))
+
+# Apply scaling
 scaler = StandardScaler()
-df[num_cols] = scaler.fit_transform(df[num_cols])
+df[valid_cols] = scaler.fit_transform(df[valid_cols])
 
 # -----------------------------
-# Add target back
+# ADD TARGET BACK
 # -----------------------------
-df["Label"] = target
+df[target_col] = target.values
 
 # -----------------------------
-# Save SCALED dataset (for Chi-square)
+# FINAL CHECK BEFORE SAVE
 # -----------------------------
-df.to_csv("NF-UNSW-NB15-v3-CLEANED.csv", index=False)
+print("Final shape:", df.shape)
+print("Remaining NaN:", df.isnull().sum().sum())
 
-print("Both datasets saved successfully!")
+# -----------------------------
+# SAVE CLEANED DATASET
+# -----------------------------
+clean_path = os.path.join(OUTPUT_DIR, "cleaned.csv")
+
+try:
+    df.to_csv(clean_path, index=False)
+    print("✅ Saved:", clean_path)
+except Exception as e:
+    print("❌ Error saving cleaned file:", e)
+
+print("\n🚀 Cleaning COMPLETE for CICIDS")
