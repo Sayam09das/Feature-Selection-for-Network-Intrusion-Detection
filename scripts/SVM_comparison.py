@@ -8,138 +8,194 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 # -----------------------------
-# Fix display issue (SHOW ALL COLUMNS)
+# SETTINGS
 # -----------------------------
-pd.set_option('display.max_columns', None)
-pd.set_option('display.width', None)
+DATASETS = ["UNSW", "CICIDS", "TON"]
 
-# -----------------------------
-# Load Dataset (FAST)
-# -----------------------------
-df = pd.read_csv(
-    "cleaned/UNSW/NF-UNSW-NB15-v3-CLEANED.csv",
-    nrows=100000   # load partial for speed
-)
-
-print("Dataset loaded!")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
 
 # -----------------------------
-# Sampling (important)
+# TARGET DETECTION
 # -----------------------------
-df = df.sample(n=50000, random_state=42).reset_index(drop=True)
-
-Y = df["Label"]
-
-# -----------------------------
-# Feature Sets
-# -----------------------------
-chi_features = [
-    'MIN_TTL','MAX_TTL','FLOW_END_MILLISECONDS','FLOW_START_MILLISECONDS',
-    'L4_DST_PORT','DST_TO_SRC_AVG_THROUGHPUT','SERVER_TCP_FLAGS',
-    'LONGEST_FLOW_PKT','MAX_IP_PKT_LEN','IPV4_DST_ADDR',
-    'SRC_TO_DST_SECOND_BYTES','IPV4_SRC_ADDR','TCP_FLAGS',
-    'CLIENT_TCP_FLAGS','DNS_QUERY_ID','FTP_COMMAND_RET_CODE',
-    'MIN_IP_PKT_LEN','TCP_WIN_MAX_IN','SHORTEST_FLOW_PKT','DST_TO_SRC_IAT_AVG'
-]
-
-dispersion_features = [
-    'DNS_TTL_ANSWER','DST_TO_SRC_AVG_THROUGHPUT','SRC_TO_DST_AVG_THROUGHPUT',
-    'IN_BYTES','FLOW_END_MILLISECONDS','FLOW_START_MILLISECONDS',
-    'RETRANSMITTED_IN_BYTES','OUT_BYTES','RETRANSMITTED_OUT_BYTES',
-    'DNS_QUERY_ID','L4_DST_PORT','DURATION_IN','FLOW_DURATION_MILLISECONDS',
-    'ICMP_TYPE','TCP_WIN_MAX_IN','L4_SRC_PORT','SRC_TO_DST_IAT_MIN',
-    'TCP_WIN_MAX_OUT','DURATION_OUT','DNS_QUERY_TYPE'
-]
-
-be_features = [
-    'MIN_TTL','MAX_TTL','FLOW_END_MILLISECONDS','FLOW_START_MILLISECONDS',
-    'DST_TO_SRC_AVG_THROUGHPUT','SERVER_TCP_FLAGS','LONGEST_FLOW_PKT',
-    'MAX_IP_PKT_LEN','IPV4_DST_ADDR','SRC_TO_DST_SECOND_BYTES',
-    'IPV4_SRC_ADDR','TCP_FLAGS','CLIENT_TCP_FLAGS','DNS_QUERY_ID',
-    'FTP_COMMAND_RET_CODE','MIN_IP_PKT_LEN','TCP_WIN_MAX_IN',
-    'SHORTEST_FLOW_PKT','DST_TO_SRC_IAT_AVG'
-]
-
-rf_features = [
-    'SHORTEST_FLOW_PKT','MIN_TTL','MAX_TTL','MIN_IP_PKT_LEN',
-    'IPV4_SRC_ADDR','SRC_TO_DST_SECOND_BYTES','DST_TO_SRC_AVG_THROUGHPUT',
-    'SERVER_TCP_FLAGS','TCP_WIN_MAX_OUT','TCP_WIN_MAX_IN',
-    'IPV4_DST_ADDR','SRC_TO_DST_AVG_THROUGHPUT','DST_TO_SRC_IAT_AVG',
-    'FLOW_DURATION_MILLISECONDS','DST_TO_SRC_IAT_STDDEV',
-    'SRC_TO_DST_IAT_AVG','TCP_FLAGS','RETRANSMITTED_IN_PKTS',
-    'DST_TO_SRC_SECOND_BYTES','OUT_BYTES'
-]
+def get_target_column(df):
+    for col in ["Label", "label", "Attack", "attack"]:
+        if col in df.columns:
+            return col
+    return None
 
 # -----------------------------
-# Evaluation Function
+# MODEL FUNCTION
 # -----------------------------
-def evaluate_model(X, Y, name):
+def evaluate_model(X, y, name):
 
-    X_train, X_test, Y_train, Y_test = train_test_split(
-        X, Y, test_size=0.2, random_state=42
+    if len(y.unique()) < 2 or X.shape[1] == 0:
+        return [name, 0, 0, 0, 0, 0]
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
     )
 
-    # Scale (important for SVM)
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    # SVM Model (fast version)
-    model = SVC(kernel='linear')
+    model = SVC(kernel="rbf", class_weight="balanced")
 
-    # Time tracking
-    start_time = time.time()
-    model.fit(X_train, Y_train)
-    end_time = time.time()
+    start = time.time()
+    model.fit(X_train, y_train)
+    end = time.time()
 
-    Y_pred = model.predict(X_test)
+    y_pred = model.predict(X_test)
 
-    return {
-        "Method": name,
-        "Accuracy": accuracy_score(Y_test, Y_pred),
-        "Precision": precision_score(Y_test, Y_pred, zero_division=0),
-        "Recall": recall_score(Y_test, Y_pred, zero_division=0),
-        "F1-Score": f1_score(Y_test, Y_pred, zero_division=0),
-        "Time (s)": round(end_time - start_time, 4)
-    }
+    return [
+        name,
+        accuracy_score(y_test, y_pred),
+        precision_score(y_test, y_pred, zero_division=0),
+        recall_score(y_test, y_pred, zero_division=0),
+        f1_score(y_test, y_pred, zero_division=0),
+        round(end - start, 4)
+    ]
 
 # -----------------------------
-# Run All Methods
+# MAIN LOOP
 # -----------------------------
-results = []
+final_results = []
 
-results.append(evaluate_model(df[chi_features], Y, "Chi-Square"))
-results.append(evaluate_model(df[dispersion_features], Y, "Dispersion"))
-results.append(evaluate_model(df[be_features], Y, "Backward Elimination"))
-results.append(evaluate_model(df[rf_features], Y, "Random Forest"))
+for DATASET in DATASETS:
+
+    print(f"\n🚀 Processing {DATASET}...\n")
+
+    path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/cleaned.csv")
+
+    # 🔥 LOAD FULL DATA (FIX FOR CICIDS)
+    df = pd.read_csv(path)
+
+    print("Original shape:", df.shape)
+
+    # -----------------------------
+    # RANDOM SHUFFLE + SAMPLE (FIX)
+    # -----------------------------
+    df = df.sample(frac=1, random_state=42).reset_index(drop=True)
+    df = df.sample(n=100000, random_state=42)
+
+    # -----------------------------
+    # CLEAN
+    # -----------------------------
+    df = df.replace([float("inf"), -float("inf")], pd.NA)
+    df = df.dropna().reset_index(drop=True)
+
+    # -----------------------------
+    # TARGET
+    # -----------------------------
+    target_col = get_target_column(df)
+
+    if target_col is None:
+        print("❌ No target column → skipping")
+        continue
+
+    print(f"✅ Target column: {target_col}")
+
+    # -----------------------------
+    # REMOVE LEAKAGE
+    # -----------------------------
+    leak_cols = [
+        "IPV4_SRC_ADDR",
+        "IPV4_DST_ADDR",
+        "DNS_QUERY_ID",
+        "FLOW_START_MILLISECONDS",
+        "FLOW_END_MILLISECONDS"
+    ]
+
+    df = df.drop(columns=[c for c in leak_cols if c in df.columns], errors="ignore")
+
+    print("After cleaning:", df.shape)
+
+    # -----------------------------
+    # CHECK DISTRIBUTION
+    # -----------------------------
+    print("\nClass distribution BEFORE sampling:\n", df[target_col].value_counts())
+
+    if df[target_col].nunique() < 2:
+        print("❌ Only one class → skipping dataset\n")
+        continue
+
+    # -----------------------------
+    # BALANCE DATA
+    # -----------------------------
+    class_counts = df[target_col].value_counts()
+    min_class = class_counts.min()
+
+    balanced = []
+    for cls in class_counts.index:
+        balanced.append(
+            df[df[target_col] == cls].sample(min_class, random_state=42)
+        )
+
+    df = pd.concat(balanced).sample(frac=1, random_state=42).reset_index(drop=True)
+
+    print("\nBalanced distribution:\n", df[target_col].value_counts())
+
+    # -----------------------------
+    # SPLIT
+    # -----------------------------
+    Y = df[target_col]
+    X_full = df.drop(columns=[target_col, "Attack"], errors="ignore")
+
+    # -----------------------------
+    # SAFE FEATURES
+    # -----------------------------
+    def safe_features(f):
+        return [col for col in f if col in X_full.columns]
+
+    chi_features = safe_features([
+        'TCP_WIN_MAX_IN','TCP_FLAGS','CLIENT_TCP_FLAGS','L7_PROTO',
+        'DST_TO_SRC_IAT_MAX','DURATION_OUT','MIN_TTL','MAX_TTL',
+        'PROTOCOL','DST_TO_SRC_IAT_STDDEV','L4_DST_PORT'
+    ])
+
+    dispersion_features = safe_features([
+        'OUT_BYTES','IN_BYTES','DST_TO_SRC_AVG_THROUGHPUT',
+        'SRC_TO_DST_AVG_THROUGHPUT','NUM_PKTS_UP_TO_128_BYTES',
+        'IN_PKTS','TCP_WIN_MAX_IN','TCP_WIN_MAX_OUT','L4_DST_PORT'
+    ])
+
+    be_features = safe_features([
+        'TCP_WIN_MAX_IN','TCP_FLAGS','CLIENT_TCP_FLAGS',
+        'L7_PROTO','DST_TO_SRC_IAT_MAX','PROTOCOL',
+        'DST_TO_SRC_IAT_STDDEV','L4_DST_PORT'
+    ])
+
+    rf_features = safe_features([
+        'TCP_WIN_MAX_IN','L4_DST_PORT','IN_BYTES','OUT_BYTES',
+        'LONGEST_FLOW_PKT','SERVER_TCP_FLAGS','TCP_FLAGS'
+    ])
+
+    # -----------------------------
+    # RUN MODELS
+    # -----------------------------
+    final_results.append([DATASET] + evaluate_model(X_full[chi_features], Y, "Chi"))
+    final_results.append([DATASET] + evaluate_model(X_full[dispersion_features], Y, "Disp"))
+    final_results.append([DATASET] + evaluate_model(X_full[be_features], Y, "BE"))
+    final_results.append([DATASET] + evaluate_model(X_full[rf_features], Y, "RF"))
 
 # -----------------------------
-# Final Results
+# FINAL OUTPUT
 # -----------------------------
-results_df = pd.DataFrame(results)
+columns = ["Dataset", "Method", "Accuracy", "Precision", "Recall", "F1", "Time"]
+
+results_df = pd.DataFrame(final_results, columns=columns)
+
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', 1000)
+pd.set_option('display.expand_frame_repr', False)
+print("\n🔥 FINAL RESULT TABLE 🔥\n")
+print(results_df)
 
 # -----------------------------
-# Save Results to Files
+# SAVE
 # -----------------------------
-PROJECT_ROOT = "/Users/sayamdas/Documents/Programming/Final Year Project"
-DATASET = "UNSW"
+save_path = os.path.join(PROJECT_ROOT, "results", "final_svm_results.csv")
+results_df.to_csv(save_path, index=False)
 
-save_dir = os.path.join(PROJECT_ROOT, "results", DATASET)
-os.makedirs(save_dir, exist_ok=True)
-
-csv_path = os.path.join(save_dir, "svm_results.csv")
-results_df.to_csv(csv_path, index=False)
-
-txt_path = os.path.join(save_dir, "selected_features.txt")
-with open(txt_path, "w") as f:
-    f.write("Chi-Square Features:\n")
-    f.write(", ".join(chi_features) + "\n\n")
-    f.write("Dispersion Features:\n")
-    f.write(", ".join(dispersion_features) + "\n\n")
-    f.write("Backward Elimination Features:\n")
-    f.write(", ".join(be_features) + "\n\n")
-    f.write("Random Forest Features:\n")
-    f.write(", ".join(rf_features) + "\n")
-
-print("\n===== FINAL SVM COMPARISON =====\n")
-print(results_df.to_string(index=False))
+print(f"\n📁 Saved at: {save_path}")

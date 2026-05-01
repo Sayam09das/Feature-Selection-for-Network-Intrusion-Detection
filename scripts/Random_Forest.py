@@ -1,158 +1,114 @@
 import pandas as pd
-import time
+import numpy as np
 import os
-
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.ensemble import RandomForestClassifier
 
 # -----------------------------
 # SETTINGS
 # -----------------------------
-DATASET = "UNSW"   # change → UNSW / TON / CICIDS
+DATASET = "CICIDS"   # UNSW / CICIDS / TON
 
 # -----------------------------
-# Fix display issue
+# PATH SETUP
 # -----------------------------
-pd.set_option('display.max_columns', None)
-pd.set_option('display.width', None)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+
+data_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/cleaned.csv")
 
 # -----------------------------
-# Load Dataset
+# LOAD DATA
 # -----------------------------
-path = f"cleaned/{DATASET}/cleaned.csv"
+df = pd.read_csv(data_path)
 
-df = pd.read_csv(
-    path,
-    nrows=100000   # load partial for speed
-)
-
-print("Dataset loaded!")
+print(f"Dataset loaded: {DATASET}")
+print("Original Shape:", df.shape)
 
 # -----------------------------
-# Sampling (important for speed)
+# CLEAN DATA
+# -----------------------------
+df = df.replace([np.inf, -np.inf], np.nan)
+df = df.fillna(df.mean(numeric_only=True))
+
+print("After cleaning:", df.shape)
+
+# -----------------------------
+# SAMPLING (IMPORTANT)
 # -----------------------------
 df = df.sample(n=50000, random_state=42).reset_index(drop=True)
 
-Y = df["Label"]
+# -----------------------------
+# TARGET COLUMN DETECTION
+# -----------------------------
+if "Label" in df.columns:
+    target_col = "Label"
+elif "Attack" in df.columns:
+    target_col = "Attack"
+else:
+    raise Exception("❌ No target column found!")
+
+Y = df[target_col]
 
 # -----------------------------
-# Feature Sets (UNSW)
+# SAFE DROP (IMPORTANT FIX)
 # -----------------------------
-chi_features = [
-    'MIN_TTL','MAX_TTL','FLOW_END_MILLISECONDS','FLOW_START_MILLISECONDS',
-    'L4_DST_PORT','DST_TO_SRC_AVG_THROUGHPUT','SERVER_TCP_FLAGS',
-    'LONGEST_FLOW_PKT','MAX_IP_PKT_LEN','IPV4_DST_ADDR',
-    'SRC_TO_DST_SECOND_BYTES','IPV4_SRC_ADDR','TCP_FLAGS',
-    'CLIENT_TCP_FLAGS','DNS_QUERY_ID','FTP_COMMAND_RET_CODE',
-    'MIN_IP_PKT_LEN','TCP_WIN_MAX_IN','SHORTEST_FLOW_PKT','DST_TO_SRC_IAT_AVG'
+drop_cols = [
+    col for col in ["Label", "Attack", "IPV4_SRC_ADDR", "IPV4_DST_ADDR"]
+    if col in df.columns
 ]
-
-dispersion_features = [
-    'DNS_TTL_ANSWER','DST_TO_SRC_AVG_THROUGHPUT','SRC_TO_DST_AVG_THROUGHPUT',
-    'IN_BYTES','FLOW_END_MILLISECONDS','FLOW_START_MILLISECONDS',
-    'RETRANSMITTED_IN_BYTES','OUT_BYTES','RETRANSMITTED_OUT_BYTES',
-    'DNS_QUERY_ID','L4_DST_PORT','DURATION_IN','FLOW_DURATION_MILLISECONDS',
-    'ICMP_TYPE','TCP_WIN_MAX_IN','L4_SRC_PORT','SRC_TO_DST_IAT_MIN',
-    'TCP_WIN_MAX_OUT','DURATION_OUT','DNS_QUERY_TYPE'
-]
-
-be_features = [
-    'MIN_TTL','MAX_TTL','FLOW_END_MILLISECONDS','FLOW_START_MILLISECONDS',
-    'DST_TO_SRC_AVG_THROUGHPUT','SERVER_TCP_FLAGS','LONGEST_FLOW_PKT',
-    'MAX_IP_PKT_LEN','IPV4_DST_ADDR','SRC_TO_DST_SECOND_BYTES',
-    'IPV4_SRC_ADDR','TCP_FLAGS','CLIENT_TCP_FLAGS','DNS_QUERY_ID',
-    'FTP_COMMAND_RET_CODE','MIN_IP_PKT_LEN','TCP_WIN_MAX_IN',
-    'SHORTEST_FLOW_PKT','DST_TO_SRC_IAT_AVG'
-]
-
-rf_features = [
-    'SHORTEST_FLOW_PKT','MIN_TTL','MAX_TTL','MIN_IP_PKT_LEN',
-    'IPV4_SRC_ADDR','SRC_TO_DST_SECOND_BYTES','DST_TO_SRC_AVG_THROUGHPUT',
-    'SERVER_TCP_FLAGS','TCP_WIN_MAX_OUT','TCP_WIN_MAX_IN',
-    'IPV4_DST_ADDR','SRC_TO_DST_AVG_THROUGHPUT','DST_TO_SRC_IAT_AVG',
-    'FLOW_DURATION_MILLISECONDS','DST_TO_SRC_IAT_STDDEV',
-    'SRC_TO_DST_IAT_AVG','TCP_FLAGS','RETRANSMITTED_IN_PKTS',
-    'DST_TO_SRC_SECOND_BYTES','OUT_BYTES'
-]
+X = df.drop(columns=drop_cols)
 
 # -----------------------------
-# Evaluation Function
+# TRAIN RANDOM FOREST
 # -----------------------------
-def evaluate_model(X, Y, name):
+rf = RandomForestClassifier(
+    n_estimators=100,
+    random_state=42,
+    n_jobs=-1
+)
 
-    X_train, X_test, Y_train, Y_test = train_test_split(
-        X, Y, test_size=0.2, random_state=42
-    )
-
-    # Scale (important for SVM)
-    scaler = StandardScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_test = scaler.transform(X_test)
-
-    # SVM Model
-    model = SVC(kernel='linear')
-
-    # Time tracking
-    start_time = time.time()
-    model.fit(X_train, Y_train)
-    end_time = time.time()
-
-    Y_pred = model.predict(X_test)
-
-    return {
-        "Method": name,
-        "Accuracy": accuracy_score(Y_test, Y_pred),
-        "Precision": precision_score(Y_test, Y_pred, zero_division=0),
-        "Recall": recall_score(Y_test, Y_pred, zero_division=0),
-        "F1-Score": f1_score(Y_test, Y_pred, zero_division=0),
-        "Time (s)": round(end_time - start_time, 4)
-    }
+rf.fit(X, Y)
 
 # -----------------------------
-# Run All Methods
+# FEATURE IMPORTANCE
 # -----------------------------
-results = []
+importance = rf.feature_importances_
 
-results.append(evaluate_model(df[chi_features], Y, "Chi-Square"))
-results.append(evaluate_model(df[dispersion_features], Y, "Dispersion"))
-results.append(evaluate_model(df[be_features], Y, "Backward Elimination"))
-results.append(evaluate_model(df[rf_features], Y, "Random Forest"))
+feature_importance_df = pd.DataFrame({
+    "Feature": X.columns,
+    "Importance": importance
+})
 
-# -----------------------------
-# Final Results
-# -----------------------------
-results_df = pd.DataFrame(results)
-
-print("\n===== FINAL SVM COMPARISON =====\n")
-print(results_df.to_string(index=False))
+feature_importance_df = feature_importance_df.sort_values(
+    by="Importance", ascending=False
+)
 
 # -----------------------------
-# SAVE RESULTS (FIXED PATH)
+# TOP FEATURES
 # -----------------------------
-# Absolute path fix
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # scripts/
-PROJECT_ROOT = os.path.dirname(BASE_DIR)                # project root
+k = 20
 
-save_dir = os.path.join(PROJECT_ROOT, "results", DATASET)
+top_features_df = feature_importance_df.head(k)
+
+print("\n🔥 Top Features using Random Forest:\n")
+print(top_features_df)
+
+rf_features = top_features_df["Feature"].values
+
+print("\n✅ Selected Random Forest Features:\n")
+print(rf_features)
+
+# -----------------------------
+# SAVE RESULTS
+# -----------------------------
+save_dir = os.path.join(PROJECT_ROOT, f"results/{DATASET}")
 os.makedirs(save_dir, exist_ok=True)
 
 # Save CSV
-csv_path = os.path.join(save_dir, "svm_results.csv")
-results_df.to_csv(csv_path, index=False)
+top_features_df.to_csv(os.path.join(save_dir, "rf_features.csv"), index=False)
 
-print(f"\n✅ Results saved at: {csv_path}")
+# Save TXT
+with open(os.path.join(save_dir, "rf_features.txt"), "w") as f:
+    f.write(", ".join(rf_features))
 
-# -----------------------------
-# Save Feature Lists
-# -----------------------------
-txt_path = os.path.join(save_dir, "selected_features.txt")
-
-with open(txt_path, "w") as f:
-    f.write("Chi-Square:\n" + str(chi_features) + "\n\n")
-    f.write("Dispersion:\n" + str(dispersion_features) + "\n\n")
-    f.write("Backward Elimination:\n" + str(be_features) + "\n\n")
-    f.write("Random Forest:\n" + str(rf_features))
-
-print(f"✅ Feature list saved at: {txt_path}")
+print(f"\n📁 Results saved in: results/{DATASET}/")
