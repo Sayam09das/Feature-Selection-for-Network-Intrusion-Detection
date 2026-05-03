@@ -12,7 +12,7 @@ DATASET = "CICIDS"   # UNSW / CICIDS / TON
 # PATH SETUP
 # -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.dirname(BASE_DIR)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(BASE_DIR))
 
 data_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/cleaned.csv")
 

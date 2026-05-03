@@ -12,7 +12,7 @@ DATASET = "CICIDS"   # UNSW / CICIDS / TON
 # -----------------------------
 # PATH SETUP
 # -----------------------------
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 scaled_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/cleaned.csv")
 original_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/no_scale.csv")

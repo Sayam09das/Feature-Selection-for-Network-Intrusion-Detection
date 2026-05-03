@@ -68,7 +68,7 @@ for DATASET in DATASETS:
 
     path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/cleaned.csv")
 
-    # 🔥 LOAD FULL DATA (FIX FOR CICIDS)
+    # LOAD FULL DATA (FIX FOR CICIDS)
     df = pd.read_csv(path)
 
     print("Original shape:", df.shape)
@@ -91,10 +91,10 @@ for DATASET in DATASETS:
     target_col = get_target_column(df)
 
     if target_col is None:
-        print("❌ No target column → skipping")
+        print("No target column → skipping")
         continue
 
-    print(f"✅ Target column: {target_col}")
+    print(f"Target column: {target_col}")
 
     # -----------------------------
     # REMOVE LEAKAGE
@@ -117,7 +117,7 @@ for DATASET in DATASETS:
     print("\nClass distribution BEFORE sampling:\n", df[target_col].value_counts())
 
     if df[target_col].nunique() < 2:
-        print("❌ Only one class → skipping dataset\n")
+        print("Only one class → skipping dataset\n")
         continue
 
     # -----------------------------
@@ -143,41 +143,39 @@ for DATASET in DATASETS:
     X_full = df.drop(columns=[target_col, "Attack"], errors="ignore")
 
     # -----------------------------
-    # SAFE FEATURES
+    # LOAD FEATURE LISTS (AUTO)
     # -----------------------------
-    def safe_features(f):
-        return [col for col in f if col in X_full.columns]
+    def load_features(method_name):
+        path = os.path.join(PROJECT_ROOT, f"results/{DATASET}/{method_name}.csv")
+        if not os.path.exists(path):
+            print(f"⚠️ Missing {method_name} features")
+            return []
+        df_feat = pd.read_csv(path)
+        features = [f for f in df_feat["Feature"].head(20).tolist() if f in X_full.columns]
+        if len(features) == 0:
+            print(f"⚠️ {method_name} has 0 valid features")
+        return features
 
-    chi_features = safe_features([
-        'TCP_WIN_MAX_IN','TCP_FLAGS','CLIENT_TCP_FLAGS','L7_PROTO',
-        'DST_TO_SRC_IAT_MAX','DURATION_OUT','MIN_TTL','MAX_TTL',
-        'PROTOCOL','DST_TO_SRC_IAT_STDDEV','L4_DST_PORT'
-    ])
 
-    dispersion_features = safe_features([
-        'OUT_BYTES','IN_BYTES','DST_TO_SRC_AVG_THROUGHPUT',
-        'SRC_TO_DST_AVG_THROUGHPUT','NUM_PKTS_UP_TO_128_BYTES',
-        'IN_PKTS','TCP_WIN_MAX_IN','TCP_WIN_MAX_OUT','L4_DST_PORT'
-    ])
 
-    be_features = safe_features([
-        'TCP_WIN_MAX_IN','TCP_FLAGS','CLIENT_TCP_FLAGS',
-        'L7_PROTO','DST_TO_SRC_IAT_MAX','PROTOCOL',
-        'DST_TO_SRC_IAT_STDDEV','L4_DST_PORT'
-    ])
-
-    rf_features = safe_features([
-        'TCP_WIN_MAX_IN','L4_DST_PORT','IN_BYTES','OUT_BYTES',
-        'LONGEST_FLOW_PKT','SERVER_TCP_FLAGS','TCP_FLAGS'
-    ])
+    chi_features = load_features("chi_square")
+    dispersion_features = load_features("dispersion")
+    be_features = load_features("be")
+    rf_features = load_features("random_forest")
+    pearson_features = load_features("pearson")
+    fisher_features = load_features("fisher")
+    dt_features = load_features("decision_tree")
 
     # -----------------------------
-    # RUN MODELS
+    # RUN ALL 7
     # -----------------------------
     final_results.append([DATASET] + evaluate_model(X_full[chi_features], Y, "Chi"))
     final_results.append([DATASET] + evaluate_model(X_full[dispersion_features], Y, "Disp"))
     final_results.append([DATASET] + evaluate_model(X_full[be_features], Y, "BE"))
     final_results.append([DATASET] + evaluate_model(X_full[rf_features], Y, "RF"))
+    final_results.append([DATASET] + evaluate_model(X_full[pearson_features], Y, "Pearson"))
+    final_results.append([DATASET] + evaluate_model(X_full[fisher_features], Y, "Fisher"))
+    final_results.append([DATASET] + evaluate_model(X_full[dt_features], Y, "DecisionTree"))
 
 # -----------------------------
 # FINAL OUTPUT
@@ -189,7 +187,7 @@ results_df = pd.DataFrame(final_results, columns=columns)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.width', 1000)
 pd.set_option('display.expand_frame_repr', False)
-print("\n🔥 FINAL RESULT TABLE 🔥\n")
+print("\nFINAL RESULT TABLE\n")
 print(results_df)
 
 # -----------------------------
@@ -198,4 +196,4 @@ print(results_df)
 save_path = os.path.join(PROJECT_ROOT, "results", "final_svm_results.csv")
 results_df.to_csv(save_path, index=False)
 
-print(f"\n📁 Saved at: {save_path}")
+print(f"\nSaved at: {save_path}")
