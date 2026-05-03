@@ -168,6 +168,10 @@ for DATASET in DATASETS:
     mad_features = load_features("mad")
     anova_features = load_features("anova")
     forward_features = load_features("forward")
+    ig_features = load_features("information_gain")
+    threshold_features = load_features("threshold")
+    rfe_features = load_features("rfe")
+    lasso_features = load_features("lasso")
 
     # -----------------------------
     # RUN ALL 7
@@ -182,6 +186,10 @@ for DATASET in DATASETS:
     final_results.append([DATASET] + evaluate_model(X_full[mad_features], Y, "MAD"))
     final_results.append([DATASET] + evaluate_model(X_full[anova_features], Y, "ANOVA"))
     final_results.append([DATASET] + evaluate_model(X_full[forward_features], Y, "Forward"))
+    final_results.append([DATASET] + evaluate_model(X_full[ig_features], Y, "InformationGain"))
+    final_results.append([DATASET] + evaluate_model(X_full[threshold_features], Y, "Threshold"))
+    final_results.append([DATASET] + evaluate_model(X_full[rfe_features], Y, "RFE"))
+    final_results.append([DATASET] + evaluate_model(X_full[lasso_features], Y, "LASSO"))
 
 # -----------------------------
 # FINAL OUTPUT
