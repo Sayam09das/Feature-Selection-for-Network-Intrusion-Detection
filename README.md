@@ -151,6 +151,24 @@ The study uses the following evaluation measures:
 - F1-score
 - Training time
 
+## Graphical Output
+The comparison script saves five separate graph outputs in the `results` directory after execution. These visualizations are useful for project reports, presentations, and viva demonstrations.
+
+### Accuracy Comparison
+![Accuracy Comparison](/Users/sayamdas/Documents/Programming/Final%20Year%20Project/Output/Accuracy%20Comparison.png)
+
+### Precision Comparison
+![Precision Comparison](/Users/sayamdas/Documents/Programming/Final%20Year%20Project/Output/Precision%20Comparsion.png)
+
+### Recall Comparison
+![Recall Comparison](/Users/sayamdas/Documents/Programming/Final%20Year%20Project/Output/Recall%20Comparison.png)
+
+### F1-Score Comparison
+![F1-Score Comparison](/Users/sayamdas/Documents/Programming/Final%20Year%20Project/Output/F1%20Comparison.png)
+
+### Time Comparison
+![Time Comparison](/Users/sayamdas/Documents/Programming/Final%20Year%20Project/Output/Time%20Comparison.png)
+
 ## Key Contribution
 This project provides a structured comparison of classical and modern feature selection methods for efficient machine learning. Its main contribution is the cross-dataset evaluation of multiple approaches under a common classification framework, helping identify methods that are more stable, accurate, and computationally practical for real-world applications.
 

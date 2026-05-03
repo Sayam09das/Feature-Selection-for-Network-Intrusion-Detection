@@ -1,6 +1,8 @@
 import os
 import pandas as pd
 import time
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -115,7 +117,6 @@ for DATASET in DATASETS:
     # CHECK DISTRIBUTION
     # -----------------------------
     print("\nClass distribution BEFORE sampling:\n", df[target_col].value_counts())
-
     if df[target_col].nunique() < 2:
         print("Only one class → skipping dataset\n")
         continue
@@ -204,6 +205,45 @@ pd.set_option('display.expand_frame_repr', False)
 print("\nFINAL RESULT TABLE\n")
 print(results_df)
 
+
+# -----------------------------
+# SEPARATE COMPARISON GRAPHS
+# Accuracy, Precision, Recall, F1, Time
+# -----------------------------
+metrics = ["Accuracy", "Precision", "Recall", "F1", "Time"]
+
+for metric in metrics:
+    plt.figure(figsize=(16, 7))
+
+    sns.barplot(
+        data=results_df,
+        x="Method",
+        y=metric,
+        hue="Dataset"
+    )
+
+    plt.title(f"{metric} Comparison Across Datasets", fontsize=16)
+    plt.xlabel("Method")
+    plt.ylabel(metric)
+    plt.xticks(rotation=45, ha="right")
+
+    if metric != "Time":
+        plt.ylim(0.90, 1.01)
+
+    plt.legend(title="Dataset")
+    plt.tight_layout()
+
+    plot_path = os.path.join(
+        PROJECT_ROOT,
+        "results",
+        f"{metric.lower()}_comparison.png"
+    )
+
+    plt.savefig(plot_path, dpi=300)
+    plt.show()
+    plt.close()
+
+    print(f"{metric} comparison plot saved at: {plot_path}")
 # -----------------------------
 # SAVE
 # -----------------------------
