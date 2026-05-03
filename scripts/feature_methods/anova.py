@@ -20,7 +20,7 @@ data_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/no_scale.csv")
 # -----------------------------
 df = pd.read_csv(data_path)
 
-print(f"\n✅ {DATASET} Dataset loaded!")
+print(f"\n {DATASET} Dataset loaded!")
 
 # -----------------------------
 # TARGET COLUMN DETECTION
@@ -30,7 +30,7 @@ if "Label" in df.columns:
 elif "Attack" in df.columns:
     target_col = "Attack"
 else:
-    raise Exception("❌ No target column found!")
+    raise Exception("No target column found!")
 
 # -----------------------------
 # FEATURES + TARGET
@@ -72,12 +72,12 @@ anova_df = anova_df.sort_values(by="Score", ascending=False)
 
 anova_top = anova_df.head(k)
 
-print("\n🔥 Top Features using ANOVA:\n")
+print("\nTop Features using ANOVA:\n")
 print(anova_top)
 
 anova_features = anova_top["Feature"].values
 
-print("\n✅ Selected ANOVA Features:\n")
+print("\nSelected ANOVA Features:\n")
 print(anova_features)
 
 # -----------------------------
@@ -93,4 +93,4 @@ anova_top.to_csv(os.path.join(save_dir, "anova.csv"), index=False)
 with open(os.path.join(save_dir, "feature_lists_anova.txt"), "w") as f:
     f.write(", ".join(anova_features))
 
-print(f"\n📁 ANOVA results saved in: results/{DATASET}/")
+print(f"\nANOVA results saved in: results/{DATASET}/")

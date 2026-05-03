@@ -31,7 +31,7 @@ if "Label" in df.columns:
 elif "Attack" in df.columns:
     target_col = "Attack"
 else:
-    raise Exception("❌ No target column found!")
+    raise Exception("No target column found!")
 
 print("Target column:", target_col)
 
@@ -86,7 +86,7 @@ df_no_scale[target_col] = target.values
 no_scale_path = os.path.join(OUTPUT_DIR, "no_scale.csv")
 df_no_scale.to_csv(no_scale_path, index=False)
 
-print("✅ Saved:", no_scale_path)
+print("Saved:", no_scale_path)
 
 # -----------------------------
 # SCALING (SAFE VERSION)
@@ -126,8 +126,8 @@ clean_path = os.path.join(OUTPUT_DIR, "cleaned.csv")
 
 try:
     df.to_csv(clean_path, index=False)
-    print("✅ Saved:", clean_path)
+    print("Saved:", clean_path)
 except Exception as e:
-    print("❌ Error saving cleaned file:", e)
+    print("Error saving cleaned file:", e)
 
-print("\n🚀 Cleaning COMPLETE for CICIDS")
+print("\nCleaning COMPLETE for CICIDS")

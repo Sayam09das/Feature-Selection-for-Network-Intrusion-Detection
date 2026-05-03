@@ -171,4 +171,4 @@ be_df = pd.DataFrame({
 
 be_df.to_csv(os.path.join(save_dir, "be.csv"), index=False)
 
-print(f"\n✅ BE features saved in: results/{DATASET}/be.csv")
+print(f"\nBE features saved in: results/{DATASET}/be.csv")

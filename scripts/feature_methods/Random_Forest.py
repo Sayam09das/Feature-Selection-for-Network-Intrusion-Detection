@@ -45,7 +45,7 @@ if "Label" in df.columns:
 elif "Attack" in df.columns:
     target_col = "Attack"
 else:
-    raise Exception("❌ No target column found!")
+    raise Exception("No target column found!")
 
 Y = df[target_col]
 
@@ -90,12 +90,12 @@ k = 20
 
 top_features_df = feature_importance_df.head(k)
 
-print("\n🔥 Top Features using Random Forest:\n")
+print("\nTop Features using Random Forest:\n")
 print(top_features_df)
 
 rf_features = top_features_df["Feature"].values
 
-print("\n✅ Selected Random Forest Features:\n")
+print("\nSelected Random Forest Features:\n")
 print(rf_features)
 
 # -----------------------------
@@ -111,4 +111,4 @@ top_features_df.to_csv(os.path.join(save_dir, "rf_features.csv"), index=False)
 with open(os.path.join(save_dir, "rf_features.txt"), "w") as f:
     f.write(", ".join(rf_features))
 
-print(f"\n📁 Results saved in: results/{DATASET}/")
+print(f"\nResults saved in: results/{DATASET}/")

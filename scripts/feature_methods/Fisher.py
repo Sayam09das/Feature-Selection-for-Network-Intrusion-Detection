@@ -19,7 +19,7 @@ data_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/no_scale.csv")
 # -----------------------------
 df = pd.read_csv(data_path)
 
-print(f"\n✅ {DATASET} Dataset loaded!")
+print(f"\n{DATASET} Dataset loaded!")
 
 # -----------------------------
 # TARGET COLUMN DETECTION
@@ -29,7 +29,7 @@ if "Label" in df.columns:
 elif "Attack" in df.columns:
     target_col = "Attack"
 else:
-    raise Exception("❌ No target column found!")
+    raise Exception("No target column found!")
 
 # -----------------------------
 # FEATURES + TARGET
@@ -94,12 +94,12 @@ k = 20
 
 top_features = fisher_df.head(k)
 
-print("\n🔥 Top Features using Fisher Score:\n")
+print("\nTop Features using Fisher Score:\n")
 print(top_features)
 
 fisher_features = top_features["Feature"].values
 
-print("\n✅ Selected Fisher Features:\n")
+print("\nSelected Fisher Features:\n")
 print(fisher_features)
 
 # -----------------------------
@@ -118,4 +118,4 @@ top_features.to_csv(
 with open(os.path.join(save_dir, "feature_lists_fisher.txt"), "w") as f:
     f.write("Fisher:\n" + ", ".join(fisher_features))
 
-print(f"\n📁 Results saved in: results/{DATASET}/")
+print(f"\nResults saved in: results/{DATASET}/")

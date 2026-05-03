@@ -23,7 +23,7 @@ original_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/no_scale.csv")
 df_scaled = pd.read_csv(scaled_path)
 df_original = pd.read_csv(original_path)
 
-print(f"\n✅ {DATASET} Dataset loaded!")
+print(f"\n{DATASET} Dataset loaded!")
 
 # -----------------------------
 # TARGET COLUMN DETECTION
@@ -33,14 +33,14 @@ if "Label" in df_scaled.columns:
 elif "Attack" in df_scaled.columns:
     target_col = "Attack"
 else:
-    raise Exception("❌ No target column found!")
+    raise Exception("No target column found!")
 
 # -----------------------------
 # FEATURES + TARGET (SAFE DROP)
 # -----------------------------
 Y = df_scaled[target_col]
 
-# 🔥 SAFE REMOVE (prevents leakage)
+# SAFE REMOVE (prevents leakage)
 drop_cols = [col for col in ["Label", "Attack"] if col in df_scaled.columns]
 
 X_scaled = df_scaled.drop(columns=drop_cols)
@@ -73,12 +73,12 @@ feature_scores = pd.DataFrame({
 
 feature_scores = feature_scores.sort_values(by="Score", ascending=False)
 
-print("\n🔥 Top Features using Chi-Square:\n")
+print("\nTop Features using Chi-Square:\n")
 print(feature_scores.head(k))
 
 chi_features = feature_scores.head(k)["Feature"].values
 
-print("\n✅ Selected Chi-Square Features:\n")
+print("\nSelected Chi-Square Features:\n")
 print(chi_features)
 
 # =============================
@@ -96,12 +96,12 @@ dispersion_df = pd.DataFrame({
 
 dispersion_df = dispersion_df.sort_values(by="Dispersion", ascending=False)
 
-print("\n🔥 Top Features using Dispersion Ratio:\n")
+print("\nTop Features using Dispersion Ratio:\n")
 print(dispersion_df.head(k))
 
 dispersion_features = dispersion_df.head(k)["Feature"].values
 
-print("\n✅ Selected Dispersion Features:\n")
+print("\nSelected Dispersion Features:\n")
 print(dispersion_features)
 
 # -----------------------------
@@ -119,4 +119,4 @@ with open(os.path.join(save_dir, "feature_lists.txt"), "w") as f:
     f.write("Chi-Square:\n" + ", ".join(chi_features) + "\n\n")
     f.write("Dispersion:\n" + ", ".join(dispersion_features))
 
-print(f"\n📁 Results saved in: results/{DATASET}/")
+print(f"\nResults saved in: results/{DATASET}/")

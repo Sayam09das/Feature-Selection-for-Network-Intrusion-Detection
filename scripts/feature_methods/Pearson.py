@@ -23,7 +23,7 @@ file_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/cleaned.csv")
 # -----------------------------
 df = pd.read_csv(file_path)
 
-print(f"\n✅ {DATASET} Dataset Loaded!")
+print(f"\n{DATASET} Dataset Loaded!")
 print("Shape:", df.shape)
 
 # -----------------------------
@@ -34,7 +34,7 @@ if "Label" in df.columns:
 elif "Attack" in df.columns:
     target_col = "Attack"
 else:
-    raise Exception("❌ No target column found!")
+    raise Exception("No target column found!")
 
 # -----------------------------
 # FEATURES & TARGET
@@ -90,7 +90,7 @@ k = 20
 
 top_features = pearson_df.head(k)
 
-print("\n🔥 Top Features using Pearson:\n")
+print("\nTop Features using Pearson:\n")
 print(top_features)
 
 # -----------------------------
@@ -98,7 +98,7 @@ print(top_features)
 # -----------------------------
 selected_features = top_features["Feature"].values
 
-print("\n✅ Selected Features:\n")
+print("\nSelected Features:\n")
 print(selected_features)
 
 # -----------------------------
@@ -112,4 +112,4 @@ top_features.to_csv(os.path.join(save_dir, "pearson.csv"), index=False)
 with open(os.path.join(save_dir, "pearson_features.txt"), "w") as f:
     f.write(", ".join(selected_features))
 
-print(f"\n📁 Saved at: results/{DATASET}/")
+print(f"\nSaved at: results/{DATASET}/")

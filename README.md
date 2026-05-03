@@ -23,9 +23,9 @@ This project implements and compares multiple **feature selection algorithms** t
   - And 13 more features
 
 **Advantages:**
-- ✅ Fast computation
-- ✅ Statistically sound for categorical features
-- ✅ Easy interpretation
+- Fast computation
+- Statistically sound for categorical features
+- Easy interpretation
 
 ---
 
@@ -38,9 +38,9 @@ This project implements and compares multiple **feature selection algorithms** t
   - And 14 more features
 
 **Advantages:**
-- ✅ Captures feature variability
-- ✅ Good for continuous features
-- ✅ Computationally efficient
+- Captures feature variability
+- Good for continuous features
+- Computationally efficient
 
 ---
 
@@ -56,9 +56,9 @@ This project implements and compares multiple **feature selection algorithms** t
 - And 11 more features
 
 **Advantages:**
-- ✅ Considers feature interactions
-- ✅ Statistically rigorous
-- ✅ Iterative refinement
+- Considers feature interactions
+- Statistically rigorous
+- Iterative refinement
 
 **Challenges:**
 - ⚠️ Computational complexity with high-dimensional data
@@ -87,10 +87,10 @@ This project implements and compares multiple **feature selection algorithms** t
 | 10 | `TCP_WIN_MAX_IN` | 0.0144 |
 
 **Advantages:**
-- ✅ Handles non-linear relationships
-- ✅ No convergence issues
-- ✅ Captures feature interactions naturally
-- ✅ Robust to outliers
+- Handles non-linear relationships
+- No convergence issues
+- Captures feature interactions naturally
+- Robust to outliers
 
 ---
 
@@ -100,9 +100,9 @@ This project implements and compares multiple **feature selection algorithms** t
 |-----------|-----------|-----------|---------------|---------------|
 | **Speed** | ⚡⚡⚡ Fast | ⚡⚡⚡ Fast | ⚡ Slow | ⚡⚡ Medium |
 | **Accuracy** | ⭐⭐⭐ Good | ⭐⭐ Fair | ⭐⭐⭐ Good | ⭐⭐⭐⭐ Excellent |
-| **Non-linear** | ❌ No | ❌ No | ⚠️ Limited | ✅ Yes |
-| **Scalability** | ✅ Excellent | ✅ Excellent | ⚠️ Poor | ✅ Good |
-| **Interpretability** | ✅ High | ✅ High | ✅ High | ⚠️ Medium |
+| **Non-linear** | No | No | Limited | Yes |
+| **Scalability** | Excellent | Excellent | Poor | Good |
+| **Interpretability** | High | High | High | Medium |
 
 ---
 
@@ -249,12 +249,12 @@ selected_features = [
 
 ## Key Findings
 
-✅ **Feature Selection Success:**
+**Feature Selection Success:**
 - Reduced features from 55 to 20 (63.6% reduction)
 - Maintained discriminative power through multiple algorithms
 - Identified consistent important features across methods
 
-✅ **Common Top Features Across All Methods:**
+**Common Top Features Across All Methods:**
 - TTL-related features (MIN_TTL, MAX_TTL)
 - Packet size metrics (SHORTEST_FLOW_PKT, MIN_IP_PKT_LEN)
 - Network flow timing

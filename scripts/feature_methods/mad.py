@@ -19,7 +19,7 @@ data_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/no_scale.csv")
 # -----------------------------
 df = pd.read_csv(data_path)
 
-print(f"\n✅ {DATASET} Dataset loaded!")
+print(f"\n{DATASET} Dataset loaded!")
 
 # -----------------------------
 # TARGET COLUMN DETECTION
@@ -29,7 +29,7 @@ if "Label" in df.columns:
 elif "Attack" in df.columns:
     target_col = "Attack"
 else:
-    raise Exception("❌ No target column found!")
+    raise Exception("No target column found!")
 
 # -----------------------------
 # FEATURES + TARGET
@@ -73,12 +73,12 @@ mad_df = mad_df.sort_values(by="Score", ascending=False)
 k = 20
 mad_top = mad_df.head(k)
 
-print("\n🔥 Top Features using MAD:\n")
+print("\nTop Features using MAD:\n")
 print(mad_top)
 
 mad_features = mad_top["Feature"].values
 
-print("\n✅ Selected MAD Features:\n")
+print("\nSelected MAD Features:\n")
 print(mad_features)
 
 # -----------------------------
@@ -94,4 +94,4 @@ mad_top.to_csv(os.path.join(save_dir, "mad.csv"), index=False)
 with open(os.path.join(save_dir, "feature_lists_mad.txt"), "w") as f:
     f.write(", ".join(mad_features))
 
-print(f"\n📁 MAD results saved in: results/{DATASET}/")
+print(f"\nMAD results saved in: results/{DATASET}/")

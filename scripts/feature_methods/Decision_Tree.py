@@ -19,7 +19,7 @@ data_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/no_scale.csv")
 # -----------------------------
 df = pd.read_csv(data_path)
 
-print(f"\n✅ {DATASET} Dataset loaded!")
+print(f"\n{DATASET} Dataset loaded!")
 
 # -----------------------------
 # TARGET COLUMN DETECTION
@@ -29,7 +29,7 @@ if "Label" in df.columns:
 elif "Attack" in df.columns:
     target_col = "Attack"
 else:
-    raise Exception("❌ No target column found!")
+    raise Exception("No target column found!")
 
 # -----------------------------
 # FEATURES + TARGET
@@ -69,12 +69,12 @@ feature_importance = feature_importance.sort_values(
 k = 20
 top_features = feature_importance.head(k)
 
-print("\n🔥 Top Features using Decision Tree:\n")
+print("\nTop Features using Decision Tree:\n")
 print(top_features)
 
 dt_features = top_features["Feature"].values
 
-print("\n✅ Selected Decision Tree Features:\n")
+print("\nSelected Decision Tree Features:\n")
 print(dt_features)
 
 # -----------------------------
@@ -91,4 +91,4 @@ top_features.to_csv(
 with open(os.path.join(save_dir, "feature_lists_dt.txt"), "w") as f:
     f.write("Decision Tree:\n" + ", ".join(dt_features))
 
-print(f"\n📁 Results saved in: results/{DATASET}/")
+print(f"\nResults saved in: results/{DATASET}/")

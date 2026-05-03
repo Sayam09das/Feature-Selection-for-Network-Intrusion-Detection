@@ -5,80 +5,104 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 
 # -----------------------------
-# SETTINGS (CHANGE THIS ONLY)
+# SETTINGS
 # -----------------------------
-DATASET = "CICIDS"   # UNSW / CICIDS / TON
-k = 20               # number of features to select
-sample_size = 30000  # IMPORTANT for speed
+DATASET = "UNSW"   # UNSW / CICIDS / TON
 
 # -----------------------------
-# PATH SETUP
+# PATH
 # -----------------------------
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-data_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/no_scale.csv")
+PROJECT_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
+
+data_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/cleaned.csv")
 
 # -----------------------------
 # LOAD DATA
 # -----------------------------
 df = pd.read_csv(data_path)
 
-print(f"\n✅ {DATASET} Dataset loaded!")
+print(f"\n{DATASET} Dataset loaded!")
 
 # -----------------------------
-# CLEANING
-# -----------------------------
-df = df.replace([np.inf, -np.inf], np.nan)
-df = df.fillna(0)
-
-# -----------------------------
-# SAMPLING (VERY IMPORTANT)
-# -----------------------------
-df = df.sample(n=sample_size, random_state=42).reset_index(drop=True)
-
-print(f"\nAfter sampling: {df.shape}")
-
-# -----------------------------
-# TARGET COLUMN
+# TARGET COLUMN DETECTION
 # -----------------------------
 if "Label" in df.columns:
     target_col = "Label"
 elif "Attack" in df.columns:
     target_col = "Attack"
 else:
-    raise Exception("❌ No target column found!")
+    raise Exception("No target column found!")
 
+# -----------------------------
+# REMOVE LEAKAGE COLUMNS
+# -----------------------------
+leak_cols = [
+    "IPV4_SRC_ADDR",
+    "IPV4_DST_ADDR",
+    "DNS_QUERY_ID",
+    "FLOW_START_MILLISECONDS",
+    "FLOW_END_MILLISECONDS"
+]
+
+df = df.drop(columns=[c for c in leak_cols if c in df.columns], errors="ignore")
+
+# -----------------------------
+# SAMPLE
+# -----------------------------
+sample_size = min(30000, len(df))
+df = df.sample(n=sample_size, random_state=42).reset_index(drop=True)
+
+# -----------------------------
+# CLEAN DATA
+# -----------------------------
+df = df.replace([np.inf, -np.inf], np.nan)
+df = df.dropna().reset_index(drop=True)
+
+print("After cleaning:", df.shape)
+
+# -----------------------------
+# FEATURES + TARGET
+# -----------------------------
 Y = df[target_col]
 
-drop_cols = [col for col in ["Label", "Attack"] if col in df.columns]
-X = df.drop(columns=drop_cols)
+# IMPORTANT FIX:
+# remove BOTH target columns so Attack/Label never becomes a feature
+X = df.drop(columns=[target_col, "Attack", "Label"], errors="ignore")
 
-# -----------------------------
-# REMOVE CONSTANT FEATURES
-# -----------------------------
+# keep only numeric columns
+X = X.select_dtypes(include=[np.number])
+
+# remove constant features
 X = X.loc[:, X.nunique() > 1]
 
-print(f"After cleaning: {X.shape}")
+print("Feature shape:", X.shape)
+print("Target distribution:\n", Y.value_counts())
 
-# =============================
+# -----------------------------
 # FORWARD SELECTION
-# =============================
-model = LogisticRegression(max_iter=500, solver='liblinear')
+# -----------------------------
+model = LogisticRegression(
+    max_iter=5000,
+    solver="liblinear"
+)
 
-selected_features = []
-remaining_features = list(X.columns)
+selected = []
+remaining = list(X.columns)
 
-scores_list = []
+k = min(20, len(remaining))
+scores_log = []
 
 for i in range(k):
+
+    print(f"\nSelecting feature {i + 1}/{k}...")
 
     best_score = -1
     best_feature = None
 
-    print(f"\n🔄 Selecting feature {i+1}/{k}...")
-
-    for feature in remaining_features:
-
-        temp_features = selected_features + [feature]
+    for feature in remaining:
+        temp_features = selected + [feature]
 
         try:
             scores = cross_val_score(
@@ -96,28 +120,29 @@ for i in range(k):
                 best_score = score
                 best_feature = feature
 
-        except:
+        except Exception:
             continue
 
     if best_feature is None:
+        print("No valid feature found. Stopping.")
         break
 
-    selected_features.append(best_feature)
-    remaining_features.remove(best_feature)
+    selected.append(best_feature)
+    remaining.remove(best_feature)
 
-    scores_list.append(best_score)
+    scores_log.append((best_feature, best_score))
 
-    print(f"✅ Selected: {best_feature} | Score: {best_score:.5f}")
+    print(f"Selected: {best_feature} | Score: {round(best_score, 5)}")
 
 # -----------------------------
-# FINAL OUTPUT
+# RESULT DATAFRAME
 # -----------------------------
-forward_df = pd.DataFrame({
-    "Feature": selected_features,
-    "Score": scores_list
-})
+forward_df = pd.DataFrame(
+    scores_log,
+    columns=["Feature", "Score"]
+)
 
-print("\n🔥 Final Forward Selected Features:\n")
+print("\nFinal Forward Selected Features:\n")
 print(forward_df)
 
 # -----------------------------
@@ -128,7 +153,7 @@ os.makedirs(save_dir, exist_ok=True)
 
 forward_df.to_csv(os.path.join(save_dir, "forward.csv"), index=False)
 
-with open(os.path.join(save_dir, "feature_lists_forward.txt"), "w") as f:
-    f.write(", ".join(selected_features))
+with open(os.path.join(save_dir, "forward_features.txt"), "w") as f:
+    f.write(", ".join(forward_df["Feature"].tolist()))
 
-print(f"\n📁 Forward results saved in: results/{DATASET}/")
+print(f"\n Forward results saved in: results/{DATASET}/forward.csv")

@@ -64,7 +64,7 @@ final_results = []
 
 for DATASET in DATASETS:
 
-    print(f"\n🚀 Processing {DATASET}...\n")
+    print(f"\nProcessing {DATASET}...\n")
 
     path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/cleaned.csv")
 
@@ -165,6 +165,9 @@ for DATASET in DATASETS:
     pearson_features = load_features("pearson")
     fisher_features = load_features("fisher")
     dt_features = load_features("decision_tree")
+    mad_features = load_features("mad")
+    anova_features = load_features("anova")
+    forward_features = load_features("forward")
 
     # -----------------------------
     # RUN ALL 7
@@ -176,6 +179,9 @@ for DATASET in DATASETS:
     final_results.append([DATASET] + evaluate_model(X_full[pearson_features], Y, "Pearson"))
     final_results.append([DATASET] + evaluate_model(X_full[fisher_features], Y, "Fisher"))
     final_results.append([DATASET] + evaluate_model(X_full[dt_features], Y, "DecisionTree"))
+    final_results.append([DATASET] + evaluate_model(X_full[mad_features], Y, "MAD"))
+    final_results.append([DATASET] + evaluate_model(X_full[anova_features], Y, "ANOVA"))
+    final_results.append([DATASET] + evaluate_model(X_full[forward_features], Y, "Forward"))
 
 # -----------------------------
 # FINAL OUTPUT
