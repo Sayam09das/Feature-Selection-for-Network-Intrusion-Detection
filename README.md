@@ -164,5 +164,8 @@ This project provides a structured comparison of classical and modern feature se
 - Tanish Das
   GitHub: `Tanish-Das`
 
+## License
+This project is released under the MIT License. See [LICENSE](/Users/sayamdas/Documents/Programming/Final%20Year%20Project/LICENSE) for details.
+
 ## Conclusion
 The experimental results show that feature selection remains a dataset-sensitive problem. Filter methods offer speed and interpretability, wrapper methods provide targeted refinement, and embedded methods often deliver stronger practical performance. The overall findings reinforce the need for efficient and reliable feature selection strategies that can adapt to diverse datasets while preserving model accuracy and generalization.
