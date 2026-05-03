@@ -1,301 +1,168 @@
-# Feature Selection for Network Intrusion Detection
+# Comparative Analysis of Feature Selection Methods for Efficient Machine Learning
 
-## Project Overview
+## Abstract
+This project presents a comparative study of feature selection methods for efficient machine learning on large-scale network security datasets. The work evaluates filter, wrapper, and embedded feature selection strategies to identify compact and informative feature subsets that improve classification performance while reducing dimensionality. The experimental pipeline is implemented across three benchmark datasets: `NF-UNSW-NB15-v3`, `NF-CICIDS2018-v3`, and `NF-ToN-IoT-v3`. Performance is assessed using an SVM classifier with standard evaluation metrics such as accuracy, precision, recall, F1-score, and execution time.
 
-This project implements and compares multiple **feature selection algorithms** to identify the most discriminative features for network intrusion detection using the **UNSW-NB15** dataset. The goal is to determine which feature selection method best reduces dimensionality while maintaining (or improving) model performance.
+## Keywords
+Feature Selection, Machine Learning, Comparative Analysis, Intrusion Detection, Dimensionality Reduction, SVM, Filter Methods, Wrapper Methods, Embedded Methods
 
-## Dataset
+## Problem Statement
+Existing feature selection methods do not deliver consistently optimal performance across different datasets, which leads to unstable and dataset-dependent results. This creates several practical challenges:
 
-- **Dataset:** NF-UNSW-NB15-v3 (Network Flow-based format)
-- **Total Records:** 2,350,609 samples
-- **Features:** 55 features (after cleaning)
-- **Target:** Binary classification (Normal: 0, Attack: 1)
-- **Distribution:** 2,222,930 benign vs 127,679 attack samples
+- Lack of a reliable feature selection strategy that performs well across diverse data distributions
+- Instability in selected features across different data splits, reducing consistency and reproducibility
+- Reduced model accuracy and weak generalization in real-world deployment settings
+- Need for a more efficient and dependable approach to feature selection for large and heterogeneous datasets
 
-## Feature Selection Algorithms Compared
+## Objectives
+- Compare multiple feature selection methods under a unified experimental framework
+- Measure the effect of each method on classification quality and computational efficiency
+- Analyze how well different methods generalize across multiple benchmark datasets
+- Identify methods that offer a better trade-off between accuracy, stability, and runtime
 
-### 1. **Chi-Square Test** (`Feature_Selection.py`)
-- **Method:** Statistical test for feature independence
-- **Best For:** Categorical/discrete features
-- **Top 20 Features Selected:**
-  - `MIN_TTL`, `MAX_TTL`, `FLOW_END_MILLISECONDS`, `FLOW_START_MILLISECONDS`
-  - `L4_DST_PORT`, `DST_TO_SRC_AVG_THROUGHPUT`, `SERVER_TCP_FLAGS`
-  - And 13 more features
+## Methodology
 
-**Advantages:**
-- Fast computation
-- Statistically sound for categorical features
-- Easy interpretation
+### 1. Filter Methods
+- Information Gain
+- Chi-Square Test
+- Fisher Score
+- Pearson's Correlation Coefficient
+- Various Threshold Methods
+- Mean Absolute Difference (MAD)
+- Dispersion Ratio
+- ANOVA
 
----
+### 2. Wrapper Methods
+- Forward Selection
+- Backward Elimination
+- Recursive Feature Elimination (RFE)
 
-### 2. **Dispersion Ratio** (`Feature_Selection.py`)
-- **Method:** Variance-based feature selection using coefficient of variation
-- **Best For:** Numerical features with high variance
-- **Top 20 Features Selected:**
-  - `DNS_TTL_ANSWER`, `DST_TO_SRC_AVG_THROUGHPUT`, `SRC_TO_DST_AVG_THROUGHPUT`
-  - `IN_BYTES`, `FLOW_END_MILLISECONDS`, `FLOW_START_MILLISECONDS`
-  - And 14 more features
+### 3. Embedded Methods
+- L1 Regularization (LASSO)
+- Decision Tree
+- Random Forest
 
-**Advantages:**
-- Captures feature variability
-- Good for continuous features
-- Computationally efficient
+## Experimental Workflow
+1. Raw datasets are cleaned and transformed using the preprocessing pipeline in [scripts/clean_dataset.py](/Users/sayamdas/Documents/Programming/Final%20Year%20Project/scripts/clean_dataset.py).
+2. Each feature selection method generates a ranked or reduced feature subset for a target dataset.
+3. The selected features are evaluated using an SVM classifier in [scripts/SVM_comparison.py](/Users/sayamdas/Documents/Programming/Final%20Year%20Project/scripts/SVM_comparison.py).
+4. Final performance metrics are saved in [results/final_svm_results.csv](/Users/sayamdas/Documents/Programming/Final%20Year%20Project/results/final_svm_results.csv).
 
----
+## Datasets Used
+- `NF-UNSW-NB15-v3`
+- `NF-CICIDS2018-v3`
+- `NF-ToN-IoT-v3`
 
-### 3. **Backward Elimination** (`backward_Elimination.py`)
-- **Method:** Iterative feature removal based on p-values from logistic regression
-- **Significance Level:** 0.05
-- **Features Removed:** `L4_DST_PORT` (p-value: 0.987937)
-- **Final Features:** 19 out of 20 chi-square features
+Source files are stored in [data](/Users/sayamdas/Documents/Programming/Final%20Year%20Project/data).
 
-**Top 19 Selected Features:**
-- `MIN_TTL`, `MAX_TTL`, `FLOW_END_MILLISECONDS`, `FLOW_START_MILLISECONDS`
-- `DST_TO_SRC_AVG_THROUGHPUT`, `SERVER_TCP_FLAGS`, `LONGEST_FLOW_PKT`, `MAX_IP_PKT_LEN`
-- And 11 more features
-
-**Advantages:**
-- Considers feature interactions
-- Statistically rigorous
-- Iterative refinement
-
-**Challenges:**
-- ⚠️ Computational complexity with high-dimensional data
-- ⚠️ Convergence issues with correlated features
-
----
-
-### 4. **Random Forest Feature Importance** (`Random_Forest.py`)
-- **Method:** Tree-based feature importance from ensemble learning
-- **Model:** 100 decision trees
-- **Sample Size:** 50,000 samples
-- **Top 20 Features:** Based on information gain/impurity reduction
-
-**Top 10 Most Important Features:**
-| Rank | Feature | Importance |
-|------|---------|-----------|
-| 1 | `SHORTEST_FLOW_PKT` | 0.2027 |
-| 2 | `MIN_TTL` | 0.1756 |
-| 3 | `MAX_TTL` | 0.1644 |
-| 4 | `MIN_IP_PKT_LEN` | 0.1363 |
-| 5 | `IPV4_SRC_ADDR` | 0.1248 |
-| 6 | `SRC_TO_DST_SECOND_BYTES` | 0.0438 |
-| 7 | `DST_TO_SRC_AVG_THROUGHPUT` | 0.0209 |
-| 8 | `SERVER_TCP_FLAGS` | 0.0191 |
-| 9 | `TCP_WIN_MAX_OUT` | 0.0172 |
-| 10 | `TCP_WIN_MAX_IN` | 0.0144 |
-
-**Advantages:**
-- Handles non-linear relationships
-- No convergence issues
-- Captures feature interactions naturally
-- Robust to outliers
-
----
-
-## Algorithm Comparison
-
-| Criterion | Chi-Square | Dispersion | Backward Elim. | Random Forest |
-|-----------|-----------|-----------|---------------|---------------|
-| **Speed** | ⚡⚡⚡ Fast | ⚡⚡⚡ Fast | ⚡ Slow | ⚡⚡ Medium |
-| **Accuracy** | ⭐⭐⭐ Good | ⭐⭐ Fair | ⭐⭐⭐ Good | ⭐⭐⭐⭐ Excellent |
-| **Non-linear** | No | No | Limited | Yes |
-| **Scalability** | Excellent | Excellent | Poor | Good |
-| **Interpretability** | High | High | High | Medium |
-
----
-
-## 🏆 **BEST ALGORITHM: Random Forest**
-
-### Why Random Forest is Best:
-
-1. **Superior Feature Ranking:** Captures non-linear relationships and feature interactions
-2. **Robust Performance:** Handles the imbalanced dataset well (2222K vs 127K samples)
-3. **No Convergence Issues:** Unlike Backward Elimination, works reliably with large datasets
-4. **Practical Efficiency:** Balances computation time with accuracy
-5. **Identified Key Features:**
-   - Packet length features (`SHORTEST_FLOW_PKT`, `MIN_IP_PKT_LEN`)
-   - TTL values (`MIN_TTL`, `MAX_TTL`)
-   - IP addresses and throughput metrics
-
-### Key Insights:
-- **Packet size is most discriminative** (SHORTEST_FLOW_PKT: 20.27% importance)
-- **TTL variations** indicate suspicious traffic patterns (35% combined importance)
-- **Flow timing and network addresses** are secondary indicators
-- **Throughput metrics** have lower individual importance but contribute in ensemble
-
----
-
-## Project Files
-
-```
+## Repository Structure
+```text
 .
-├── clean_dataset.py              # Data preprocessing & cleaning
-├── Feature_Selection.py           # Chi-Square & Dispersion Ratio analysis
-├── backward_Elimination.py        # Logistic regression backward elimination
-├── Random_Forest.py               # Tree-based feature importance
-├── Cleaned_Dataset/
-│   ├── NF-UNSW-NB15-v3-NO-SCALE.csv      # Unscaled data
-│   └── NF-UNSW-NB15-v3-CLEANED.csv       # Scaled data
 ├── data/
-│   └── NF-UNSW-NB15-v3.csv               # Original dataset
-├── .gitignore
+│   ├── NF-CICIDS2018-v3.csv
+│   ├── NF-ToN-IoT-v3.csv
+│   └── NF-UNSW-NB15-v3.csv
+├── cleaned/
+│   ├── CICIDS/
+│   ├── TON/
+│   └── UNSW/
+├── results/
+│   ├── CICIDS/
+│   ├── TON/
+│   ├── UNSW/
+│   └── final_svm_results.csv
+├── scripts/
+│   ├── clean_dataset.py
+│   ├── SVM_comparison.py
+│   └── feature_methods/
+│       ├── anova.py
+│       ├── backward_Elimination.py
+│       ├── chi_dispersion.py
+│       ├── Decision_Tree.py
+│       ├── Fisher.py
+│       ├── forward.py
+│       ├── information_gain.py
+│       ├── lasso.py
+│       ├── mad.py
+│       ├── Pearson.py
+│       ├── Random_Forest.py
+│       ├── rfe.py
+│       └── threshold.py
 └── README.md
 ```
 
----
+## Implementation Coverage
+The current repository implementation includes the following method scripts:
 
-## Installation
+- Filter: Chi-Square, Dispersion Ratio, Fisher Score, Pearson Correlation, Information Gain, MAD, ANOVA, Threshold-based selection
+- Wrapper: Forward Selection, Backward Elimination, RFE
+- Embedded: LASSO, Decision Tree, Random Forest
 
-### Prerequisites
-- Python 3.8+
-- Virtual environment (recommended)
+## Performance Summary
+The final evaluation file shows that feature selection behavior changes across datasets, which supports the core motivation of this project: no single method is universally best for every case.
 
-### Setup
+- On `UNSW`, several methods achieve near-identical top performance, including Chi-Square, Backward Elimination, Pearson, ANOVA, Information Gain, RFE, and LASSO
+- On `CICIDS`, Pearson, Fisher, and ANOVA produce the highest observed accuracy in the current results
+- On `TON`, Random Forest achieves the strongest overall performance among the evaluated methods
 
+This indicates that embedded methods, especially tree-based approaches, are strong candidates for robust cross-dataset performance, while selected filter and wrapper methods remain competitive depending on data characteristics.
+
+## How to Run
+
+### 1. Create a virtual environment
 ```bash
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On macOS/Linux
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
-# Install dependencies
+### 2. Install required packages
+```bash
 pip install pandas numpy scikit-learn statsmodels
 ```
 
----
+### 3. Clean a dataset
+Update the dataset settings inside [scripts/clean_dataset.py](/Users/sayamdas/Documents/Programming/Final%20Year%20Project/scripts/clean_dataset.py:8), then run:
 
-## Usage
-
-### 1. Data Cleaning
 ```bash
-"./.venv/bin/python" clean_dataset.py
+python scripts/clean_dataset.py
 ```
-- Handles missing values
-- Removes duplicates
-- Handles infinity values
-- Scales numerical features
 
-### 2. Feature Selection Comparison
+### 4. Run feature selection methods
+Choose the dataset name inside each script under [scripts/feature_methods](/Users/sayamdas/Documents/Programming/Final%20Year%20Project/scripts/feature_methods), then execute the required method files.
+
+Example:
 ```bash
-"./.venv/bin/python" Feature_Selection.py
+python scripts/feature_methods/information_gain.py
+python scripts/feature_methods/Pearson.py
+python scripts/feature_methods/Random_Forest.py
 ```
-- Chi-Square analysis (top 20 features)
-- Dispersion Ratio analysis (top 20 features)
 
-### 3. Backward Elimination
+### 5. Compare all methods using SVM
 ```bash
-"./.venv/bin/python" backward_Elimination.py
-```
-- Iterative feature removal based on p-values
-- Outputs refined feature set
-
-### 4. Random Forest Feature Importance
-```bash
-"./.venv/bin/python" Random_Forest.py
-```
-- Trains 100-tree ensemble
-- Outputs feature importance scores
-
----
-
-## Dependencies
-
-```
-pandas>=1.3.0
-numpy>=1.20.0
-scikit-learn>=1.0.0
-statsmodels>=0.13.0
+python scripts/SVM_comparison.py
 ```
 
-Install all at once:
-```bash
-pip install -r requirements.txt
-```
+## Evaluation Metrics
+The study uses the following evaluation measures:
 
----
+- Accuracy
+- Precision
+- Recall
+- F1-score
+- Training time
 
-## Results Summary
+## Key Contribution
+This project provides a structured comparison of classical and modern feature selection methods for efficient machine learning. Its main contribution is the cross-dataset evaluation of multiple approaches under a common classification framework, helping identify methods that are more stable, accurate, and computationally practical for real-world applications.
 
-### Recommended Feature Set (Top 20 from Random Forest):
-```python
-selected_features = [
-    'SHORTEST_FLOW_PKT',           # 0.2027
-    'MIN_TTL',                     # 0.1756
-    'MAX_TTL',                     # 0.1644
-    'MIN_IP_PKT_LEN',              # 0.1363
-    'IPV4_SRC_ADDR',               # 0.1248
-    'SRC_TO_DST_SECOND_BYTES',     # 0.0438
-    'DST_TO_SRC_AVG_THROUGHPUT',   # 0.0209
-    'SERVER_TCP_FLAGS',            # 0.0191
-    'TCP_WIN_MAX_OUT',             # 0.0172
-    'TCP_WIN_MAX_IN',              # 0.0144
-    'IPV4_DST_ADDR',               # 0.0117
-    'SRC_TO_DST_AVG_THROUGHPUT',   # 0.0111
-    'DST_TO_SRC_IAT_AVG',          # 0.0092
-    'FLOW_DURATION_MILLISECONDS',  # 0.0075
-    'DST_TO_SRC_IAT_STDDEV',       # 0.0063
-    'SRC_TO_DST_IAT_AVG',          # 0.0041
-    'TCP_FLAGS',                   # 0.0040
-    'RETRANSMITTED_IN_PKTS',       # 0.0039
-    'DST_TO_SRC_SECOND_BYTES',     # 0.0038
-    'OUT_BYTES'                    # 0.0031
-]
-```
+## Team Members
+- Sayam Das
+  GitHub: `sayam09das`
+- Sayandeep Patra
+  GitHub: `Sayandeep07`
+- Sherya Sikder
+  GitHub: `Sheryasikder123`
+- Tanish Das
+  GitHub: `Tanish-Das`
 
-**Dimensionality Reduction:** 55 → 20 features (63.6% reduction)
-
----
-
-## Key Findings
-
-**Feature Selection Success:**
-- Reduced features from 55 to 20 (63.6% reduction)
-- Maintained discriminative power through multiple algorithms
-- Identified consistent important features across methods
-
-**Common Top Features Across All Methods:**
-- TTL-related features (MIN_TTL, MAX_TTL)
-- Packet size metrics (SHORTEST_FLOW_PKT, MIN_IP_PKT_LEN)
-- Network flow timing
-
-⚠️ **Challenges Encountered:**
-- Data quality: Infinity and NaN values in original dataset
-- Class imbalance: 17:1 ratio (benign vs attack)
-- Convergence issues with Backward Elimination on high-dimensional data
-
----
-
-## Future Improvements
-
-1. Implement additional algorithms:
-   - Mutual Information
-   - SHAP (SHapley Additive exPlanations)
-   - RFE (Recursive Feature Elimination)
-
-2. Cross-validation with different classifiers:
-   - XGBoost
-   - Neural Networks
-   - SVM
-
-3. Feature engineering:
-   - Polynomial features
-   - Interaction terms
-   - Domain-specific aggregations
-
-4. Hyperparameter tuning for optimal feature count
-
----
-
-## Author
-**Final Year Project - Network Intrusion Detection**
-
-## License
-Private Project
-
----
-
-## References
-- UNSW-NB15 Dataset: https://www.unsw.adfa.edu.au/unsw-canberra-cyber/cybersecurity-datasets/unsw-nb15-dataset/
-- Scikit-learn Documentation: https://scikit-learn.org/
-- Statsmodels Documentation: https://www.statsmodels.org/
+## Conclusion
+The experimental results show that feature selection remains a dataset-sensitive problem. Filter methods offer speed and interpretability, wrapper methods provide targeted refinement, and embedded methods often deliver stronger practical performance. The overall findings reinforce the need for efficient and reliable feature selection strategies that can adapt to diverse datasets while preserving model accuracy and generalization.
