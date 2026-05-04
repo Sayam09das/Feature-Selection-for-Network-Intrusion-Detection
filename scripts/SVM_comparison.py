@@ -199,11 +199,62 @@ columns = ["Dataset", "Method", "Accuracy", "Precision", "Recall", "F1", "Time"]
 
 results_df = pd.DataFrame(final_results, columns=columns)
 
+# -----------------------------
+# METHOD CATEGORIES
+# -----------------------------
+filter_methods = [
+    "Chi",
+    "Disp",
+    "Pearson",
+    "Fisher",
+    "MAD",
+    "ANOVA",
+    "InformationGain",
+    "Threshold"
+]
+
+wrapper_methods = [
+    "BE",
+    "Forward",
+    "RFE"
+]
+
+embedded_methods = [
+    "RF",
+    "DecisionTree",
+    "LASSO"
+]
+
+# -----------------------------
+# SEPARATE FINAL TABLES
+# -----------------------------
+filter_df = results_df[results_df["Method"].isin(filter_methods)]
+wrapper_df = results_df[results_df["Method"].isin(wrapper_methods)]
+embedded_df = results_df[results_df["Method"].isin(embedded_methods)]
+
 pd.set_option('display.max_columns', None)
 pd.set_option('display.width', 1000)
 pd.set_option('display.expand_frame_repr', False)
 print("\nFINAL RESULT TABLE\n")
 print(results_df)
+print("\n========== FILTER METHODS RESULT TABLE ==========\n")
+print(filter_df)
+print("\n========== WRAPPER METHODS RESULT TABLE ==========\n")
+print(wrapper_df)
+print("\n========== EMBEDDED METHODS RESULT TABLE ==========\n")
+print(embedded_df)
+
+# -----------------------------
+# SAVE SEPARATE CSV FILES
+# -----------------------------
+filter_df.to_csv(os.path.join(PROJECT_ROOT, "results", "filter_methods_results.csv"), index=False)
+wrapper_df.to_csv(os.path.join(PROJECT_ROOT, "results", "wrapper_methods_results.csv"), index=False)
+embedded_df.to_csv(os.path.join(PROJECT_ROOT, "results", "embedded_methods_results.csv"), index=False)
+
+print("\nSaved separate tables:")
+print("Filter   -> results/filter_methods_results.csv")
+print("Wrapper  -> results/wrapper_methods_results.csv")
+print("Embedded -> results/embedded_methods_results.csv")
 
 
 # -----------------------------
