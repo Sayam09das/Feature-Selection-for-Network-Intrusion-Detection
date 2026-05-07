@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
-DATASET = "CICIDS"   # UNSW / CICIDS / TON
+DATASET = "CICIDS"
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 data_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/cleaned.csv")

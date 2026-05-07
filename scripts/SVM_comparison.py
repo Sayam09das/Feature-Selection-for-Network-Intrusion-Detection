@@ -9,26 +9,17 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-# -----------------------------
-# SETTINGS
-# -----------------------------
 DATASETS = ["UNSW", "CICIDS", "TON"]
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
 
-# -----------------------------
-# TARGET DETECTION
-# -----------------------------
 def get_target_column(df):
     for col in ["Label", "label", "Attack", "attack"]:
         if col in df.columns:
             return col
     return None
 
-# -----------------------------
-# MODEL FUNCTION
-# -----------------------------
 def evaluate_model(X, y, name):
 
     if len(y.unique()) < 2 or X.shape[1] == 0:
@@ -59,9 +50,6 @@ def evaluate_model(X, y, name):
         round(end - start, 4)
     ]
 
-# -----------------------------
-# MAIN LOOP
-# -----------------------------
 final_results = []
 
 for DATASET in DATASETS:
@@ -70,26 +58,16 @@ for DATASET in DATASETS:
 
     path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/cleaned.csv")
 
-    # LOAD FULL DATA (FIX FOR CICIDS)
     df = pd.read_csv(path)
 
     print("Original shape:", df.shape)
 
-    # -----------------------------
-    # RANDOM SHUFFLE + SAMPLE (FIX)
-    # -----------------------------
     df = df.sample(frac=1, random_state=42).reset_index(drop=True)
     df = df.sample(n=100000, random_state=42)
 
-    # -----------------------------
-    # CLEAN
-    # -----------------------------
     df = df.replace([float("inf"), -float("inf")], pd.NA)
     df = df.dropna().reset_index(drop=True)
 
-    # -----------------------------
-    # TARGET
-    # -----------------------------
     target_col = get_target_column(df)
 
     if target_col is None:
@@ -98,9 +76,6 @@ for DATASET in DATASETS:
 
     print(f"Target column: {target_col}")
 
-    # -----------------------------
-    # REMOVE LEAKAGE
-    # -----------------------------
     leak_cols = [
         "IPV4_SRC_ADDR",
         "IPV4_DST_ADDR",
@@ -113,17 +88,11 @@ for DATASET in DATASETS:
 
     print("After cleaning:", df.shape)
 
-    # -----------------------------
-    # CHECK DISTRIBUTION
-    # -----------------------------
     print("\nClass distribution BEFORE sampling:\n", df[target_col].value_counts())
     if df[target_col].nunique() < 2:
         print("Only one class → skipping dataset\n")
         continue
 
-    # -----------------------------
-    # BALANCE DATA
-    # -----------------------------
     class_counts = df[target_col].value_counts()
     min_class = class_counts.min()
 
@@ -137,15 +106,9 @@ for DATASET in DATASETS:
 
     print("\nBalanced distribution:\n", df[target_col].value_counts())
 
-    # -----------------------------
-    # SPLIT
-    # -----------------------------
     Y = df[target_col]
     X_full = df.drop(columns=[target_col, "Attack"], errors="ignore")
 
-    # -----------------------------
-    # LOAD FEATURE LISTS (AUTO)
-    # -----------------------------
     def load_features(method_name):
         path = os.path.join(PROJECT_ROOT, f"results/{DATASET}/{method_name}.csv")
         if not os.path.exists(path):
@@ -156,8 +119,6 @@ for DATASET in DATASETS:
         if len(features) == 0:
             print(f"⚠️ {method_name} has 0 valid features")
         return features
-
-
 
     chi_features = load_features("chi_square")
     dispersion_features = load_features("dispersion")
@@ -174,9 +135,6 @@ for DATASET in DATASETS:
     rfe_features = load_features("rfe")
     lasso_features = load_features("lasso")
 
-    # -----------------------------
-    # RUN ALL 7
-    # -----------------------------
     final_results.append([DATASET] + evaluate_model(X_full[chi_features], Y, "Chi"))
     final_results.append([DATASET] + evaluate_model(X_full[dispersion_features], Y, "Disp"))
     final_results.append([DATASET] + evaluate_model(X_full[be_features], Y, "BE"))
@@ -192,16 +150,10 @@ for DATASET in DATASETS:
     final_results.append([DATASET] + evaluate_model(X_full[rfe_features], Y, "RFE"))
     final_results.append([DATASET] + evaluate_model(X_full[lasso_features], Y, "LASSO"))
 
-# -----------------------------
-# FINAL OUTPUT
-# -----------------------------
 columns = ["Dataset", "Method", "Accuracy", "Precision", "Recall", "F1", "Time"]
 
 results_df = pd.DataFrame(final_results, columns=columns)
 
-# -----------------------------
-# METHOD CATEGORIES
-# -----------------------------
 filter_methods = [
     "Chi",
     "Disp",
@@ -225,9 +177,6 @@ embedded_methods = [
     "LASSO"
 ]
 
-# -----------------------------
-# SEPARATE FINAL TABLES
-# -----------------------------
 filter_df = results_df[results_df["Method"].isin(filter_methods)]
 wrapper_df = results_df[results_df["Method"].isin(wrapper_methods)]
 embedded_df = results_df[results_df["Method"].isin(embedded_methods)]
@@ -244,9 +193,6 @@ print(wrapper_df)
 print("\n========== EMBEDDED METHODS RESULT TABLE ==========\n")
 print(embedded_df)
 
-# -----------------------------
-# SAVE SEPARATE CSV FILES
-# -----------------------------
 filter_df.to_csv(os.path.join(PROJECT_ROOT, "results", "filter_methods_results.csv"), index=False)
 wrapper_df.to_csv(os.path.join(PROJECT_ROOT, "results", "wrapper_methods_results.csv"), index=False)
 embedded_df.to_csv(os.path.join(PROJECT_ROOT, "results", "embedded_methods_results.csv"), index=False)
@@ -256,11 +202,6 @@ print("Filter   -> results/filter_methods_results.csv")
 print("Wrapper  -> results/wrapper_methods_results.csv")
 print("Embedded -> results/embedded_methods_results.csv")
 
-
-# -----------------------------
-# SEPARATE COMPARISON GRAPHS
-# Accuracy, Precision, Recall, F1, Time
-# -----------------------------
 metrics = ["Accuracy", "Precision", "Recall", "F1", "Time"]
 
 for metric in metrics:
@@ -295,9 +236,7 @@ for metric in metrics:
     plt.close()
 
     print(f"{metric} comparison plot saved at: {plot_path}")
-# -----------------------------
-# SAVE
-# -----------------------------
+
 save_path = os.path.join(PROJECT_ROOT, "results", "final_svm_results.csv")
 results_df.to_csv(save_path, index=False)
 

@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn.feature_selection import VarianceThreshold
 
-DATASET = "UNSW"   # UNSW / CICIDS / TON
+DATASET = "UNSW"
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 data_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/cleaned.csv")
@@ -49,4 +49,4 @@ os.makedirs(save_dir, exist_ok=True)
 
 threshold_df.head(20).to_csv(os.path.join(save_dir, "threshold.csv"), index=False)
 
-print(f"\n📁 Saved: results/{DATASET}/threshold.csv")
+print(f"\n Saved: results/{DATASET}/threshold.csv")

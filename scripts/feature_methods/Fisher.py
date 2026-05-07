@@ -2,28 +2,16 @@ import pandas as pd
 import numpy as np
 import os
 
-# -----------------------------
-# SETTINGS (CHANGE THIS ONLY)
-# -----------------------------
-DATASET = "TON"   # UNSW / CICIDS / TON
+DATASET = "TON"
 
-# -----------------------------
-# PATH SETUP
-# -----------------------------
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 data_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/no_scale.csv")
 
-# -----------------------------
-# LOAD DATA
-# -----------------------------
 df = pd.read_csv(data_path)
 
 print(f"\n{DATASET} Dataset loaded!")
 
-# -----------------------------
-# TARGET COLUMN DETECTION
-# -----------------------------
 if "Label" in df.columns:
     target_col = "Label"
 elif "Attack" in df.columns:
@@ -31,9 +19,6 @@ elif "Attack" in df.columns:
 else:
     raise Exception("No target column found!")
 
-# -----------------------------
-# FEATURES + TARGET
-# -----------------------------
 Y = df[target_col]
 
 drop_cols = [col for col in ["Label", "Attack"] if col in df.columns]
@@ -42,9 +27,6 @@ X = df.drop(columns=drop_cols)
 print("\nTarget distribution:\n")
 print(Y.value_counts())
 
-# =============================
-# FISHER SCORE
-# =============================
 fisher_scores = []
 classes = np.unique(Y)
 
@@ -71,25 +53,16 @@ for column in X.columns:
 
     fisher_scores.append([column, fisher_score])
 
-# -----------------------------
-# CREATE DATAFRAME
-# -----------------------------
 fisher_df = pd.DataFrame(
     fisher_scores,
     columns=["Feature", "Fisher_Score"]
 )
 
-# -----------------------------
-# SORT FEATURES
-# -----------------------------
 fisher_df = fisher_df.sort_values(
     by="Fisher_Score",
     ascending=False
 )
 
-# -----------------------------
-# SELECT TOP FEATURES
-# -----------------------------
 k = 20
 
 top_features = fisher_df.head(k)
@@ -102,19 +75,14 @@ fisher_features = top_features["Feature"].values
 print("\nSelected Fisher Features:\n")
 print(fisher_features)
 
-# -----------------------------
-# SAVE RESULTS
-# -----------------------------
 save_dir = os.path.join(PROJECT_ROOT, f"results/{DATASET}")
 os.makedirs(save_dir, exist_ok=True)
 
-# Save CSV
 top_features.to_csv(
     os.path.join(save_dir, "fisher_score.csv"),
     index=False
 )
 
-# Save feature list
 with open(os.path.join(save_dir, "feature_lists_fisher.txt"), "w") as f:
     f.write("Fisher:\n" + ", ".join(fisher_features))
 

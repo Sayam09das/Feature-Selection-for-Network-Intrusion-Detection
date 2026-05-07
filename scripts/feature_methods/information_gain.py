@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn.feature_selection import mutual_info_classif
 
-DATASET = "TON"   # UNSW / CICIDS / TON
+DATASET = "TON"
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 data_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/cleaned.csv")
@@ -47,4 +47,4 @@ os.makedirs(save_dir, exist_ok=True)
 
 ig_df.head(20).to_csv(os.path.join(save_dir, "information_gain.csv"), index=False)
 
-print(f"\n📁 Saved: results/{DATASET}/information_gain.csv")
+print(f"\n Saved: results/{DATASET}/information_gain.csv")

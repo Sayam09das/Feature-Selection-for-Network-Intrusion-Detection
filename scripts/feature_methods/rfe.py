@@ -5,20 +5,20 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import RFE
 from sklearn.preprocessing import StandardScaler
 
-DATASET = "UNSW"   # UNSW / CICIDS / TON
+DATASET = "UNSW"
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 data_path = os.path.join(PROJECT_ROOT, f"cleaned/{DATASET}/cleaned.csv")
 
 df = pd.read_csv(data_path)
-print(f"\n✅ {DATASET} Dataset loaded!")
+print(f"\n {DATASET} Dataset loaded!")
 
 if "Label" in df.columns:
     target_col = "Label"
 elif "Attack" in df.columns:
     target_col = "Attack"
 else:
-    raise Exception("❌ No target column found!")
+    raise Exception("No target column found!")
 
 leak_cols = [
     "IPV4_SRC_ADDR", "IPV4_DST_ADDR", "DNS_QUERY_ID",
@@ -49,7 +49,7 @@ rfe_df = pd.DataFrame({
 
 top_features = rfe_df[rfe_df["Score"] == 1]
 
-print("\n🔥 Top RFE Features:\n")
+print("\n Top RFE Features:\n")
 print(top_features)
 
 save_dir = os.path.join(PROJECT_ROOT, f"results/{DATASET}")
@@ -57,4 +57,4 @@ os.makedirs(save_dir, exist_ok=True)
 
 top_features.to_csv(os.path.join(save_dir, "rfe.csv"), index=False)
 
-print(f"\n📁 Saved: results/{DATASET}/rfe.csv")
+print(f"\n Saved: results/{DATASET}/rfe.csv")
